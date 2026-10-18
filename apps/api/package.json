@@ -1,0 +1,28 @@
+{
+  "name": "@groundwork/api",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node --env-file-if-exists=../../.env --watch src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test test/core.test.js test/http.test.js test/indexer.test.js",
+    "test:integration": "node --env-file-if-exists=../../.env --test test/integration.test.js",
+    "reset-password": "node --env-file-if-exists=../../.env src/reset-password.js"
+  },
+  "dependencies": {
+    "argon2": "^0.44.0",
+    "cookie-parser": "^1.4.7",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "helmet": "^8.1.0",
+    "mammoth": "^1.13.0",
+    "multer": "^2.4.0",
+    "openid-client": "^6.8.8",
+    "pdfjs-dist": "^6.4.299",
+    "pg": "^8.16.3",
+    "turndown": "^7.2.4",
+    "turndown-plugin-gfm": "^1.0.2",
+    "zod": "^4.1.12"
+  }
+}

@@ -1,0 +1,83 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://groundwork:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/groundwork
+      PUBLIC_URL: ${PUBLIC_URL:-http://localhost:3000}
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET in .env}
+      SETUP_CODE: ${SETUP_CODE:-}
+      AUTH_MODE: ${AUTH_MODE:-local}
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:-}
+      OIDC_ALLOWED_DOMAIN: ${OIDC_ALLOWED_DOMAIN:-}
+      OIDC_ALLOWED_TENANT: ${OIDC_ALLOWED_TENANT:-}
+      ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+      OIDC_ADMIN_SUBJECTS: ${OIDC_ADMIN_SUBJECTS:-}
+      OIDC_LABEL: ${OIDC_LABEL:-Company account}
+      OIDC_ALLOW_HTTP: ${OIDC_ALLOW_HTTP:-false}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-}
+      CHAT_CONTEXT_TOKENS: ${CHAT_CONTEXT_TOKENS:-8192}
+      CHAT_OUTPUT_TOKENS: ${CHAT_OUTPUT_TOKENS:-1200}
+      AUDIT_RETENTION_DAYS: ${AUDIT_RETENTION_DAYS:-90}
+      MODEL_CONCURRENCY: ${MODEL_CONCURRENCY:-2}
+      DOCS_PATH: /documents
+      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
+      CHAT_MODEL: ${CHAT_MODEL:-llama3.2:3b}
+      EMBED_MODEL: ${EMBED_MODEL:-nomic-embed-text}
+      SIMILARITY_THRESHOLD: ${SIMILARITY_THRESHOLD:-0.55}
+      TOP_K: ${TOP_K:-4}
+      AUTO_PULL_MODELS: ${AUTO_PULL_MODELS:-true}
+    volumes:
+      - ${DOCS_PATH:-./sample-docs}:/documents:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    restart: unless-stopped
+  db:
+    image: pgvector/pgvector:pg17
+    environment:
+      POSTGRES_USER: groundwork
+      POSTGRES_DB: groundwork
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U groundwork -d groundwork"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+  ollama:
+    image: ollama/ollama:latest
+    environment:
+      OLLAMA_NO_CLOUD: "1"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+volumes:
+  postgres_data:
+  ollama_data:

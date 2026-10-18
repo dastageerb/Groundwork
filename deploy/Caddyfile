@@ -1,0 +1,14 @@
+# Replace with the internal hostname served by your trusted HTTPS certificate.
+# Set PUBLIC_URL=https://groundwork.example.internal in the application .env.
+groundwork.example.internal {
+    tls internal
+    reverse_proxy 127.0.0.1:3000 {
+        # Overwrite, rather than append, user-controlled forwarding headers.
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Real-IP {remote_host}
+        flush_interval -1
+        transport http {
+            read_timeout 310s
+        }
+    }
+}

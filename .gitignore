@@ -1,0 +1,40 @@
+node_modules/
+.next/
+# Environment & credentials (never commit real secrets)
+.env
+.env*.local
+.env.production
+.env.staging
+*.pem
+*.key
+*.crt
+
+# Test & Logs
+coverage/
+test-results/
+*.log
+outputs/
+
+# PRD and planning docs
+*PRD*
+Groundwork PRD.docx
+Groundwork PRD.md
+
+# Internal development notes & agent skills
+AGENTS.md
+docs/skills/
+docs/architecture-review.md
+docs/verification.md
+docs/walkthrough.md
+docs/design-reference.md
+Main.dc.html
+support.js
+vendor/
+
+# OS & IDE files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.tsbuildinfo
+.turbo/

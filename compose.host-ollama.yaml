@@ -1,0 +1,11 @@
+# Use the models already installed in host Ollama (Docker Desktop).
+# docker compose -f compose.yaml -f compose.host-ollama.yaml up --build -d
+services:
+  api:
+    environment:
+      OLLAMA_URL: http://host.docker.internal:11434
+    depends_on: !override
+      db:
+        condition: service_healthy
+  ollama:
+    profiles: [bundled-ollama]

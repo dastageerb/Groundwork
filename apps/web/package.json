@@ -1,0 +1,16 @@
+{
+  "name": "@groundwork/web",
+  "version": "0.3.0",
+  "private": true,
+  "scripts": {
+    "dev": "node --env-file-if-exists=../../.env ../../node_modules/next/dist/bin/next dev",
+    "build": "node ../../node_modules/next/dist/bin/next build",
+    "start": "node ../../node_modules/next/dist/bin/next start"
+  },
+  "dependencies": {
+    "next": "^16.0.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "lucide-react": "^0.468.0"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "groundwork",
+  "version": "0.3.0",
+  "private": true,
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "concurrently -k -n api,web \"npm run dev -w apps/api\" \"npm run dev -w apps/web\"",
+    "build": "npm run build -w apps/web",
+    "test": "npm run test -w apps/api",
+    "test:integration": "npm run test:integration -w apps/api",
+    "evaluate": "node scripts/evaluate.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
