@@ -54,7 +54,8 @@ user. Department changes refresh the directory and available choices together. S
 below the profile contains company sign-in configuration, account/password controls,
 and administrator embed setup. Initial setup offers Google Workspace, Microsoft 365, or local accounts. A provider
 choice creates a recovery administrator then opens that provider’s configuration.
-The unconfigured login screen also offers an authenticated setup shortcut. The forced password change
+Provider configuration is exposed only in initial setup and administrator Settings;
+the public login page has no configuration shortcut. The forced password change
 remains a separate sign-in requirement. Settings uses a Team sign-in selector with
 Google Workspace, Microsoft 365, and No workspace — local accounts. Without saved
 provider settings, local accounts is the default; an explicit provider choice from
@@ -183,3 +184,20 @@ quality, concurrent authorization behavior, OIDC interoperability, authenticated
 browser integration, and hardware capacity still need evidence. See
 [verification](verification.md) for the dated deployment and UI checks.
 
+
+## Account removal and feedback visibility
+
+Migration 006 adds user tombstones. DELETE /api/users/:id takes the shared role-change
+lock, rechecks the actor, protects the final admin/recovery admin, and revokes sessions
+and memberships in one short transaction. Sessions, SQL access, local login, resets,
+user editing/listing, and OIDC reject removed users. OIDC identity tombstones remain to
+block automatic re-provisioning. Audit history retains its original user reference.
+The account is not erased and its username/email remains reserved.
+
+Collapsed activity rows show rating/note flags. Feedback separates saved rating from
+saved note state, retains drafts on failure, and uses a bounded browser request with
+idempotent upsert retries. Generation instructions explicitly limit answers to the
+requested facts. Duplicate claim text is removed and displayed sources are numbered
+in first-use order; audit evidence records answerCitation alongside original candidate
+numbers. This is structural control and a prompting improvement, not a guarantee of
+semantic relevance or grounding.

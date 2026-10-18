@@ -143,10 +143,13 @@ export function createApp({ pool, model, config }) {
     const hash = temporaryPassword ? await argon2.hash(temporaryPassword, { type: argon2.argon2id }) : undefined;
     await transaction(pool, async db => {
       await db.query('SELECT pg_advisory_xact_lock(762913)');
+      const {rows:[actor]}=await db.query('SELECT role,deleted_at FROM users WHERE id=$1 FOR SHARE',[req.user.id]);
+      if(!actor||actor.deleted_at||actor.role!=='admin')throw new HttpError(403,'Administrator access is required.');
       const { rows: [target] } = await db.query('SELECT * FROM users WHERE id=$1 AND deleted_at IS NULL FOR UPDATE', [id]);
       if (!target) throw new HttpError(404, 'User not found.');
       if(hash && (!target.password_hash || config.authMode==='oidc'))throw new HttpError(422,'Company account passwords are managed by your identity provider.');
       if (target.role === 'admin' && input.role === 'member' && (await db.query("SELECT id FROM users WHERE role='admin' AND deleted_at IS NULL")).rowCount <= 1) throw new HttpError(409, 'At least one administrator must remain.');
+      if(target.role==='admin'&&input.role==='member'&&target.password_hash&&!target.must_change_password&&!(await db.query("SELECT id FROM users WHERE role='admin' AND deleted_at IS NULL AND id<>$1 AND password_hash IS NOT NULL AND NOT must_change_password",[id])).rowCount)throw new HttpError(409,'Keep a local administrator for recovery. Create another local administrator before changing this role.');
       if (input.role) await db.query('UPDATE users SET role=$2 WHERE id=$1', [id, input.role]);
       if(input.email!==undefined)await db.query('UPDATE users SET email=$2 WHERE id=$1',[id,input.email]);
       if(input.departments!==undefined)await replaceDepartments(db,'user_departments','user_id',id,input.departments);

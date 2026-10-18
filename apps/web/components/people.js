@@ -12,6 +12,7 @@ export default function People({ currentUser, onChange, onCompanySetup }) {
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
   const [secret, setSecret] = useState(null);
+  const [notice, setNotice] = useState('');
 
   async function load() {
     const [people, groups] = await Promise.all([api('/users'), api('/departments')]);
@@ -28,11 +29,19 @@ export default function People({ currentUser, onChange, onCompanySetup }) {
     try { await load(); if (person.id === currentUser.id) await onChange(); }
     catch (e) { setError(e.message); }
   }
+  async function deleted(person) {
+    setEditing(null); setNotice('Account deleted. Their access has been revoked.');
+    try { if(person.id===currentUser.id)await onChange();else await load(); }
+    catch(e){setError(e.message);}
+  }
+  const otherAdmins=(users||[]).filter(u=>u.role==='admin'&&u.id!==editing?.id);
+  const deletionBlock=editing?.role==='admin'&&!otherAdmins.length?'The last administrator cannot be deleted. Make another person an administrator first.':editing?.role==='admin'&&editing.localAccount&&!editing.mustChangePassword&&!otherAdmins.some(u=>u.localAccount&&!u.mustChangePassword)?'Keep a local administrator for recovery. Add another local administrator before deleting this account.':'';
   const visible = (users || []).filter(u => `${u.name} ${u.username} ${u.email || ''}`.toLowerCase().includes(search.toLowerCase()));
   return <section className="panel simple-people">
     <div className="panel-heading"><h1>People</h1>{authMode && authMode !== 'oidc' && <button className="button small" onClick={() => setEditing({ name: '', username: '', role: 'member', email: '', departments: [] })}><Plus size={16}/>Add person</button>}</div>
     {authMode && <p className="people-sign-in-note">{authMode==='local'?'Have Google Workspace or Microsoft 365? Let people join with their company accounts.':'Company accounts appear here after their first sign-in.'} <button className="text-button" onClick={onCompanySetup}>Company sign-in settings</button></p>}
     {error && <p className="error" role="alert">{error}</p>}
+    {notice && <p className="success-notice" role="status">{notice}</p>}
     {secret && <div className="secret-card" role="status"><KeyRound size={20}/><div><strong>Temporary password for {secret.username}</strong><p>Copy and share it securely. A password change is required at sign-in.</p><code>{secret.password}</code></div><button className="icon-button" aria-label="Dismiss temporary password" onClick={() => setSecret(null)}><X size={18}/></button></div>}
     <div className="user-list-surface">
       <div className="user-list-toolbar"><div className="search-field"><Search size={17}/><input aria-label="Search people" placeholder="Search people…" value={search} onChange={e => setSearch(e.target.value)}/></div><span>{users === null ? 'Loading…' : `${users.length} ${users.length === 1 ? 'person' : 'people'}`}</span></div>
@@ -45,11 +54,11 @@ export default function People({ currentUser, onChange, onCompanySetup }) {
       </button></li>)}</ul>
       {users !== null && !visible.length && <div className="simple-empty"><Users size={25}/><p>{users.length ? 'No matching people.' : 'No users yet.'}</p></div>}
     </div>
-    {editing && <PersonEditor person={editing} departments={departments} authMode={authMode} onDepartmentsChanged={load} onClose={() => setEditing(null)} onSaved={saved}/>}
+    {editing && <PersonEditor person={editing} departments={departments} authMode={authMode} onDepartmentsChanged={load} onClose={() => setEditing(null)} onSaved={saved} onDeleted={deleted} deletionBlock={deletionBlock}/>}
   </section>;
 }
 
-function PersonEditor({ person, departments, authMode, onDepartmentsChanged, onClose, onSaved }) {
+function PersonEditor({ person, departments, authMode, onDepartmentsChanged, onClose, onSaved, onDeleted, deletionBlock }) {
   const dialog = useRef(null);
   const [ids, setIds] = useState(person.departments || []);
   const [busy, setBusy] = useState(false);
@@ -97,6 +106,14 @@ function PersonEditor({ person, departments, authMode, onDepartmentsChanged, onC
     catch (e) { setError(e.message); }
     finally { setBusy(false); }
   }
+  async function deleteAccount() {
+    if(busy||deletionBlock)return;
+    if(!confirm(`Delete the account for ${person.name}? Their access and sessions will be revoked. Answer activity will be retained.`))return;
+    setBusy(true);setError('');
+    try {await api('/users/'+person.id,{method:'DELETE'});await onDeleted(person);}
+    catch(e){setError(e.message);}
+    finally{setBusy(false);}
+  }
   return <dialog ref={dialog} className="editor-dialog person-dialog" aria-labelledby="person-editor-title" onCancel={e => { if (busy) e.preventDefault(); else onClose(); }}>
     <header><div><h2 id="person-editor-title">{person.id ? person.name : 'Add person'}</h2>{person.id && <p className="muted">@{person.username}</p>}</div><button className="icon-button" disabled={busy} aria-label="Close person details" onClick={onClose}><X size={20}/></button></header>
     <form onSubmit={save}>
@@ -113,5 +130,6 @@ function PersonEditor({ person, departments, authMode, onDepartmentsChanged, onC
     </form>
     {person.id && person.localAccount && authMode && authMode !== 'oidc' && <div className="person-password"><button className="text-button" disabled={busy} onClick={resetPassword}><KeyRound size={15}/>Reset password</button></div>}
     <details className="department-management"><summary>Manage departments</summary><DepartmentPanel departments={departments} onChange={refreshDepartments} disabled={busy} onBusyChange={setBusy}/></details>
+    {person.id&&<section className="person-delete"><button type="button" className="text-button danger" disabled={busy||Boolean(deletionBlock)} onClick={deleteAccount}>Delete account</button><p>{deletionBlock||'Revokes access and signs out this person. Their answer activity is retained.'}</p></section>}
   </dialog>;
 }

@@ -138,3 +138,19 @@ Groundwork is open-source under the [MIT License](LICENSE). Contributions, featu
 ---
 
 *Engineered by **Ghulam Dastageer** — Full-Stack Developer.*
+
+### Removing accounts and reviewing feedback
+
+Administrators can open a person in People and choose **Delete account**. The last
+administrator and last permanent local recovery administrator cannot be removed.
+Deletion revokes sessions and memberships and prevents the same linked company
+identity from being automatically provisioned again. A tombstone and answer history
+are retained; this is access removal, not personal-data erasure. Usernames and emails
+on removed accounts remain reserved. The password-reset CLI cannot reactivate them.
+
+Answer activity shows **Not helpful**, **Helpful**, and **Note received** labels on
+collapsed rows. Feedback notes show an explicit sent state and allow retry after a
+15-second browser timeout; the server upsert makes retries safe. The answer prompt
+requests only facts responsive to the question, and displayed citations are compactly
+numbered. Structural validation and valid source numbers still do not prove semantic
+support or relevance; model-quality evaluation has not been run.

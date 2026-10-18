@@ -2440,6 +2440,38 @@
           }
         ],
         "description": "Administrator only. "
+      },
+      "delete": {
+        "summary": "Delete an account (administrator only)",
+        "description": "Soft-deletes the account, removes memberships, revokes sessions and pending company connection states, and retains audit history plus identity tombstones to prevent company auto-rejoin. Last administrator and last permanent local recovery administrator are protected. Self-deletion signs out the caller. Requires exact Origin.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Account removed; access revoked"
+          },
+          "401": {
+            "description": "Sign-in required"
+          },
+          "403": {
+            "description": "Administrator required"
+          },
+          "404": {
+            "description": "Active account not found"
+          },
+          "409": {
+            "description": "Last administrator or local recovery administrator cannot be deleted"
+          }
+        }
       }
     },
     "/api/index/rebuild": {
